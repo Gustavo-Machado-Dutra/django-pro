@@ -6,6 +6,8 @@ from django.shortcuts import render
 from .forms import AddForm
 from .models import Contact
 from django.http import HttpResponseRedirect
+from django.shortcuts import render, get_object_or_404, redirect
+
 
 def show(request):
     """ 
@@ -43,6 +45,52 @@ def add(request):
             """ redirect to the same page if django_form goes wrong """
             return render(request, 'mycontacts/add.html')
     else:
-        return render(request, 'mycontacts/add.html')
+        return render(request, 'mycontacts/add.html') 
 
-    
+
+# Página SOMENTE LEITURA
+def edit(request, pk):
+
+    if request.method == 'POST':
+        
+        django_form = AddForm(request.POST)
+        if django_form.is_valid():
+           
+            """ Assign data in Django Form to local variables """
+            new_member_name = django_form.data.get("name")
+            new_member_relation = django_form.data.get("relation")
+            new_member_phone = django_form.data.get('phone')
+            new_member_email = django_form.data.get('email')
+            
+            """ This is how your model connects to database and create a new member """
+            Contact.objects.filter(id=pk).update( 
+                name =  new_member_name, 
+                relation = new_member_relation,
+                phone = new_member_phone,
+                email = new_member_email, 
+                )
+                 
+            contact_list = Contact.objects.all()
+            return render(request, 'mycontacts/show.html',{'contacts': contact_list})    
+        
+        else:
+            """ redirect to the same page if django_form goes wrong """
+            return render(request, 'mycontacts/add.html')
+    else:
+        return render(request, 'mycontacts/add.html') 
+
+
+def delete(request, pk):
+    """ This function is called to delete one contact member from your contact list in your Database """
+    Contact.objects.filter(id=pk).delete()
+    contact_list = Contact.objects.all()
+    return render(request, 'mycontacts/show.html',{'contacts': contact_list})
+
+def view(request, pk):
+  
+    data = get_object_or_404(Contact, id=pk)
+
+    context = {
+      "data":data
+    }
+    return render(request, "mycontacts/view.html", context)
